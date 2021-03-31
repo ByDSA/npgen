@@ -6,20 +6,23 @@ import * as path from 'path';
 import * as shell from 'shelljs';
 import * as template from './utils/template';
 import chalk from 'chalk';
+import * as yargs from 'yargs';
 
 const CHOICES = fs.readdirSync(path.join(__dirname, 'templates'));
 
 const QUESTIONS = [
   {
-    name: 'project-choice',
+    name: 'template',
     type: 'list',
     message: 'What project template would you like to generate?',
-    choices: CHOICES
+    choices: CHOICES,
+    when: () => !yargs.argv['template']
   },
   {
-    name: 'project-name',
+    name: 'name',
     type: 'input',
     message: 'Project name:',
+    when: () => !yargs.argv['name'],
     validate: (input: string) => {
       if (/^([A-Za-z\-\_\d])+$/.test(input)) return true;
       else return 'Project name may only include letters, numbers, underscores and hashes.';
@@ -44,13 +47,16 @@ export interface CliOptions {
 
 inquirer.prompt(QUESTIONS)
   .then(answers => {
-    const projectChoice = answers['project-choice'];
-    const projectName = answers['project-name'];
+
+    answers = Object.assign({}, answers, yargs.argv);
+
+    const projectChoice = answers['template'];
+    const projectName = answers['name'];
     const templatePath = path.join(__dirname, 'templates', projectChoice);
     const tartgetPath = path.join(CURR_DIR, projectName);
     const templateConfig = getTemplateConfig(templatePath);
 
-    const options : CliOptions = {
+    const options: CliOptions = {
       projectName,
       templateName: projectChoice,
       templatePath,
@@ -58,25 +64,32 @@ inquirer.prompt(QUESTIONS)
       config: templateConfig
     }
 
-    createProject(tartgetPath);
+    if (!createProject(tartgetPath)) {
+      return;
+    }
+
     createDirectoryContents(templatePath, projectName, templateConfig);
-    postProcess(options);
+
+    if (!postProcess(options)) {
+      return;
+    }
+
     showMessage(options);
   });
 
 function showMessage(options: CliOptions) {
-  var ui = new inquirer.ui.BottomBar();
-  ui.write(chalk.green('Done.\n'));
-  ui.write(chalk.green(`Go into the project: cd ${options.projectName}\n`));
+  console.log('');
+  console.log(chalk.green('Done.'));
+  console.log(chalk.green(`Go into the project: cd ${options.projectName}`));
 
   const message = options.config.postMessage;
 
   if (message) {
-    ui.write('\n');
-    ui.write(chalk.yellow(message));
+    console.log('');
+    console.log(chalk.yellow(message));
+    console.log('');
   }
 
-  ui.close();
 }
 
 function getTemplateConfig(templatePath: string): TemplateConfig {
@@ -95,16 +108,19 @@ function getTemplateConfig(templatePath: string): TemplateConfig {
 
 function createProject(projectPath: string) {
   if (fs.existsSync(projectPath)) {
-    throw `${projectPath} exists. Please delete first.`;
+    console.log(chalk.red(`Folder ${projectPath} exists. Delete or use another name.`));
+    return false;
   }
 
   fs.mkdirSync(projectPath);
+  return true;
 }
 
 function postProcess(options: CliOptions) {
   if (isNode(options)) {
-    postProcessNode(options);
+    return postProcessNode(options);
   }
+  return true;
 }
 
 function isNode(options: CliOptions) {
@@ -114,13 +130,25 @@ function isNode(options: CliOptions) {
 function postProcessNode(options: CliOptions) {
   shell.cd(options.tartgetPath);
 
+  let cmd = '';
+
   if (shell.which('yarn')) {
-    shell.exec('yarn');
-  } else if (shell.which('npm')){
-    shell.exec('npm install');
-  } else {
-    console.log('No yarn or npm found. Cannot run installation.');
+    cmd = 'yarn';
+  } else if (shell.which('npm')) {
+    cmd = 'npm install';
   }
+
+  if (cmd) {
+    const result = shell.exec(cmd);
+
+    if (result.code !== 0) {
+      return false;
+    }
+  } else {
+    console.log(chalk.red('No yarn or npm found. Cannot run installation.'));
+  }
+
+  return true;
 }
 
 const SKIP_FILES = ['node_modules', '.template.json'];
@@ -139,7 +167,7 @@ function createDirectoryContents(templatePath: string, projectName: string, conf
     if (stats.isFile()) {
       let contents = fs.readFileSync(origFilePath, 'utf8');
 
-      contents = template.render(contents, {projectName});
+      contents = template.render(contents, { projectName });
 
       const writePath = path.join(CURR_DIR, projectName, file);
       fs.writeFileSync(writePath, contents, 'utf8');
