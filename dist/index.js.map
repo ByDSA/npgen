@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sourceRoot":"","sources":["../index.ts"],"names":[],"mappings":";;;AAAA,gDAAiD;AAEjD,CAAC,SAAe,IAAI;;QAClB,MAAM,mBAAU,EAAE,CAAC;IACrB,CAAC;CAAA,EAAE,CAAC,CAAC","sourcesContent":["import { showPrompt } from \"./src/prompt/Prompt\";\n\n(async function main() {\n  await showPrompt();\n}());\n"]}
