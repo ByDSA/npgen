@@ -1,0 +1,4 @@
+ {
+    "ignoreFilesEJS": ["(.*).md"],
+    "ignoreFiles": ["node_modules"]
+ }
