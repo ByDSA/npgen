@@ -26,9 +26,7 @@
     "readme": "npm run readme:clean && npx readme-md-generator -p .readme/template.md -y",
     "readme:clean": "rm -f README.md"
   },
-  "bin": {
-    "npgen": "./dist/index.js"
-  },
+  "bin": "./dist/index.js",
   "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@commitlint/cli": "^12.0.1",
