@@ -1,1 +1,0 @@
-{"version":3,"file":"CliOptions.js","sourceRoot":"","sources":["../../src/CliOptions.ts"],"names":[],"mappings":"","sourcesContent":["import { Args } from \"./prompt/Args\";\nimport TemplateConfig from \"./TemplateConfig\";\n\nexport default interface CliOptions {\n  templatePath: string;\n  targetPath: string;\n  config: TemplateConfig;\n  args: Args;\n}\n"]}
