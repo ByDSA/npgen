@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import { argv, baseDir } from "../../utils/utils";
-import { getTargetPath } from "../Prompt";
 
 const TEMPLATES_FOLDER = path.join(baseDir(), "templates");
 const CHOICES = fs.readdirSync(TEMPLATES_FOLDER);
@@ -16,6 +15,7 @@ export const PROJECT_TEMPLATE_QUESTION = {
   name: ARG_TEMPLATE,
   type: "list",
   message: "What project template would you like to generate?",
+  when: () => !argv()[ARG_TEMPLATE],
   choices: CHOICES,
 };
 
@@ -29,9 +29,6 @@ export const PROJECT_NAME_QUESTION = {
   validate: (input: string) => {
     if (!REGEX_PROJECT_NAME.test(input))
       return "Project name may only include letters, numbers, underscores and hashes.";
-
-    if (fs.existsSync(getTargetPath(input)))
-      return `Folder ${input} exists. Delete or use another name.`;
 
     return true;
   },

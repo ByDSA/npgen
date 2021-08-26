@@ -5,25 +5,11 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "prebuild": "npm run build:clean && npm rebuild && npm test",
-    "build": "tsc",
+    "prebuild": ".scripts/prebuild.sh",
+    "build": ".scripts/build.sh",
     "build:clean": "rm -rf dist",
-    "prepublishOnly": "npm run test:coverage && npm run lint:fix && npm run build",
-    "postpublish": "npm run build:clean",
-    "docs": "npm run lint:fix && npm run docs:clean && typedoc",
-    "postdocs": ".scripts/docs-footer.sh",
-    "docs:clean": ".scripts/docs-clean.sh",
-    "docs:push": ".scripts/docs-push.sh",
-    "lint:eslint": "eslint ./src/*.ts",
-    "lint:fix": "eslint ./src/*.ts --fix",
-    "release": "standard-version",
-    "postrelease": "npm run docs",
-    "release:push": "git push && git push --tags && npm run docs:push",
-    "readme": "npm run readme:clean && npx readme-md-generator -p .readme/template.md -y",
-    "readme:clean": "rm -f README.md"
+    "prepublishOnly": ".scripts/prepublishonly.sh",
+    "postpublish": "npm run build:clean"
   },
   "keywords": [],
   "author": {
@@ -45,35 +31,7 @@
   "devDependencies": {
     "@commitlint/cli": "^12.0.1",
     "@commitlint/config-conventional": "^12.0.1",
-    "@types/jest": "^26.0.20",
-    "@types/luxon": "^1.26.2",
-    "@typescript-eslint/eslint-plugin": "^4.19.0",
-    "@typescript-eslint/parser": "^4.19.0",
-    "eslint": "^7.22.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-import-resolver-typescript": "^2.4.0",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-jest": "^24.3.2",
-    "husky": "^6.0.0",
-    "jest": "^26.6.3",
-    "standard-version": "^9.1.1",
-    "ts-jest": "^26.5.3",
     "tslib": "^2.1.0",
-    "typedoc": "^0.20.32",
-    "typedoc-github-wiki-theme": "^0.2.0",
-    "typedoc-plugin-markdown": "^3.6.0",
-    "typescript": "^4.2.3",
-    "lint-staged": "^10.4.2"
-  },
-  "dependencies": {},
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.{js,json,yml,yaml,css,scss,ts,tsx,md}": [
-      "eslint --fix"
-    ]
+    "typescript": "^4.2.3"
   }
 }

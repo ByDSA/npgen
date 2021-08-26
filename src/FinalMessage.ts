@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
 import chalk from "chalk";
-import CliOptions from "./CliOptions";
+import { Args } from "./prompt/Args";
 
-export default function finalMessage(options: CliOptions) {
+export default function finalMessage(args: Args) {
   console.log("");
   console.log(chalk.green("Done."));
-  console.log(chalk.green(`Go into the project: cd ${options.args.name}`));
+  console.log(chalk.green(`Go into the project: cd ${args.name}`));
 }

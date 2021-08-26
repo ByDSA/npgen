@@ -3,8 +3,17 @@ import chalk from "chalk";
 import fs from "fs";
 import * as shell from "shelljs";
 import simpleGit, { SimpleGitOptions } from "simple-git";
-import CliOptions from "./CliOptions";
 import { createRepo, CreateRepoParams } from "./github/GitHub";
+import { npm } from "./package-manager/npm";
+import addChangelogGenerator from "./parts/Changelog";
+import addDocs from "./parts/Docs";
+import installHusky, { huskyAddCommitLint } from "./parts/Husky";
+import installJest from "./parts/Jest";
+import installEslint from "./parts/Linter";
+import addReadmeGenerator from "./parts/Readme";
+import { Args } from "./prompt/Args";
+import { copyRender } from "./Template";
+import { clgDone, sectionTitle } from "./utils/utils";
 
 function getGit() {
   const ooo: Partial<SimpleGitOptions> = {
@@ -17,7 +26,7 @@ function getGit() {
   return git;
 }
 
-export default async function postProcess(options: CliOptions) {
+export default async function postProcess(options: Args) {
   try {
     return await postProcessNode(options);
   } catch (e) {
@@ -27,12 +36,8 @@ export default async function postProcess(options: CliOptions) {
   }
 }
 
-function title(str: string) {
-  console.log(chalk.yellow(str));
-}
-
 async function initializeGitproject() {
-  title("Initializing git project...");
+  sectionTitle("Initializing git project...");
 
   needs("git");
   await getGit().init();
@@ -41,21 +46,38 @@ async function initializeGitproject() {
     throw new Error("Failed on initialize Git Project");
 }
 
-async function postProcessNode(options: CliOptions) {
-  shell.cd(options.targetPath);
+async function postProcessNode(args: Args) {
+  shell.mkdir("-p", args.out);
+  shell.cd(args.out);
+  const PACKAGE_JSON_INPUT = "dsa/package.json";
+  const PACKAGE_JSON_OUTPUT = "package.json";
+
+  copyRender(PACKAGE_JSON_INPUT, PACKAGE_JSON_OUTPUT, args);
 
   await initializeGitproject();
 
-  await installDependencies();
+  await installHusky();
+  await huskyAddCommitLint();
+
+  await installEslint();
+
+  await addDocs();
+  await addChangelogGenerator();
+
+  await installJest();
+
+  await addReadmeGenerator();
 
   const opts = {
-    name: options.args.name,
-    description: options.args.description,
-    private: options.args.repoPrivate,
+    name: args.name,
+    description: args.description,
+    private: args.repoPrivate,
   };
 
-  if (options.args.repoDo) {
-    title("Creating Github repo...");
+  await installDependencies();
+
+  if (args.repoDo) {
+    sectionTitle("Creating Github repo...");
     await createGitRepo(opts);
   }
 
@@ -63,7 +85,7 @@ async function postProcessNode(options: CliOptions) {
 }
 
 function generateReadme() {
-  title("Generating README.md...");
+  sectionTitle("Generating README.md...");
   exec("npm run readme");
 }
 
@@ -85,15 +107,16 @@ async function createGitRepo(options: CreateRepoParams) {
   const res = await createRepo(options);
   const url = res.data.clone_url;
 
-  title("Doing first commit and pushing...");
+  sectionTitle("Doing first commit and pushing...");
   await firstCommit(url);
   await getGit().push("origin", "main");
 }
 
 function installDependencies() {
-  title("Installing npm dependencies...");
+  sectionTitle("Installing npm dependencies...");
   needs("npm");
-  exec("npm i");
+  npm.install();
+  clgDone();
 }
 
 function needs(file: string) {
